@@ -8,7 +8,7 @@ Hace, con verificacion estricta (cada paso exige exactamente una coincidencia):
      No toca identificadores internos en minuscula (window.h5vcc.tizentube, ids).
   4. Antepone un aviso de licencia GPL-3.0 y atribucion al autor original.
 
-Uso: python3 -I patch_userscript.py <entrada.js> <salida.js> <Marca>
+Uso: python3 -I patch_userscript.py <entrada.js> <salida.js> <Marca> [<icono-ajustes.png>]
 """
 import re
 import sys
@@ -92,6 +92,16 @@ while True:
     n_support += 1
     pos = k
 assert n_support >= 30, f"supportTT: se esperaban >=30 bloques y hay {n_support}"
+
+# 2d) Imagen de la entrada de ajustes (opcional, 4to argumento): se embebe como data URI PNG
+#     en lugar del escudo que el original pide a gstatic.com.
+icon_png = sys.argv[4] if len(sys.argv) > 4 else None
+if icon_png:
+    import base64
+    raw = open(icon_png, "rb").read()
+    assert raw[:8] == b"\x89PNG\r\n\x1a\n", "el icono de ajustes debe ser PNG"
+    uri = "data:image/png;base64," + base64.b64encode(raw).decode()
+    t = once(r"https://www\.gstatic\.com/ytlr/img/parent_code\.png", uri, t, label="icono de ajustes")
 
 # 3) Marca visible
 before = len(re.findall("TizenTube", t))
