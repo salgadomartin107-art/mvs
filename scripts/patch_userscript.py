@@ -103,7 +103,7 @@ if icon_png:
     uri = "data:image/png;base64," + base64.b64encode(raw).decode()
     t = once(r"https://www\.gstatic\.com/ytlr/img/parent_code\.png", uri, t, label="icono de ajustes")
 
-# 2e) Recarga del inicio (SOFT_RELOAD_PAGE) con 3 s de espera (de inmediato deja el feed vacio) + dialogo de
+# 2e) Recarga del inicio (SOFT_RELOAD_PAGE) con 1,5 s de espera (de inmediato deja el feed vacio) + dialogo de
 #     salida al tocar "Atras" dos veces + filtro ampliado de anuncios del inicio.
 EXIT_JS = r"""
 try{var __bl=0,__bd=null,__bs=0,__bk=[27,4,461,10009];
@@ -124,7 +124,7 @@ if(__bk.indexOf(k)>=0){var n=Date.now();if(n-__bl<1200){__bl=0;__bo();e.preventD
 def _reload(m):
     po = re.search(r'(\w+)\(\{signalAction:\{signal:"SOFT_RELOAD_PAGE"', m.group(2)).group(1)
     js = EXIT_JS.replace("PO", po).replace("BRAND", brand).replace("\n", "")
-    return '%s("reloadHomeOnStartup")&&setTimeout(()=>{%s},3e3);%s' % (m.group(1), m.group(2), js)
+    return '%s("reloadHomeOnStartup")&&setTimeout(()=>{%s},15e2);%s' % (m.group(1), m.group(2), js)
 
 
 t = once(r'(\w+)\("reloadHomeOnStartup"\)&&(\(\w+\("launchToOnStartup"\)\?\w+\(JSON\.parse\(\w+\("launchToOnStartup"\)\)\):\w+\(\{signalAction:\{signal:"SOFT_RELOAD_PAGE"\}\}\)\))',
