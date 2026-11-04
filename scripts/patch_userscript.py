@@ -103,11 +103,10 @@ if icon_png:
     uri = "data:image/png;base64," + base64.b64encode(raw).decode()
     t = once(r"https://www\.gstatic\.com/ytlr/img/parent_code\.png", uri, t, label="icono de ajustes")
 
-# 2e) Recarga del inicio (SOFT_RELOAD_PAGE): se conserva, pero con 3 s de espera. Ejecutada de inmediato
-#     (como en el original) deja el feed vacio en esta app; esperando a que el inicio cargue, funciona.
-t = once(r'(\w+)\("reloadHomeOnStartup"\)&&(\(\w+\("launchToOnStartup"\)\?\w+\(JSON\.parse\(\w+\("launchToOnStartup"\)\)\):\w+\(\{signalAction:\{signal:"SOFT_RELOAD_PAGE"\}\}\)\))',
-         lambda m: '%s("reloadHomeOnStartup")&&setTimeout(()=>{%s},3e3)' % (m.group(1), m.group(2)),
-         t, label="recarga al iniciar con espera")
+# 2e) Arranque: se quita el SOFT_RELOAD_PAGE que el script hace en cada inicio. Se conserva "launchToOnStartup".
+t = once(r'(\w+)\("reloadHomeOnStartup"\)&&\((\w+)\("launchToOnStartup"\)\?(\w+)\(JSON\.parse\(\2\("launchToOnStartup"\)\)\):\3\(\{signalAction:\{signal:"SOFT_RELOAD_PAGE"\}\}\)\)',
+         lambda m: '%s("reloadHomeOnStartup")&&%s("launchToOnStartup")&&%s(JSON.parse(%s("launchToOnStartup")))' % (m.group(1), m.group(2), m.group(3), m.group(2)),
+         t, label="recarga al iniciar")
 
 # 3) Marca visible
 before = len(re.findall("TizenTube", t))
