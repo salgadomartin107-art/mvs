@@ -103,6 +103,12 @@ if icon_png:
     uri = "data:image/png;base64," + base64.b64encode(raw).decode()
     t = once(r"https://www\.gstatic\.com/ytlr/img/parent_code\.png", uri, t, label="icono de ajustes")
 
+# 2e) Arranque mas rapido: se quita el SOFT_RELOAD_PAGE que el script hace en cada inicio
+#     (recarga el feed de inicio justo despues de cargarlo). Se conserva "launchToOnStartup".
+t = once(r'(\w+)\("reloadHomeOnStartup"\)&&\((\w+)\("launchToOnStartup"\)\?(\w+)\(JSON\.parse\(\2\("launchToOnStartup"\)\)\):\3\(\{signalAction:\{signal:"SOFT_RELOAD_PAGE"\}\}\)\)',
+         lambda m: '%s("reloadHomeOnStartup")&&%s("launchToOnStartup")&&%s(JSON.parse(%s("launchToOnStartup")))' % (m.group(1), m.group(2), m.group(3), m.group(2)),
+         t, label="recarga al iniciar")
+
 # 3) Marca visible
 before = len(re.findall("TizenTube", t))
 t = t.replace("TizenTube Cobalt", brand).replace("TizenTube", brand)
