@@ -127,8 +127,8 @@ def _reload(m):
     import os
     d = os.environ.get("RELOAD_DELAY_MS", "1500")
     if d == "0":  # igual que el original: recarga inmediata
-        return '%s("reloadHomeOnStartup")&&%s;%s' % (m.group(1), m.group(2), js)
-    return '%s("reloadHomeOnStartup")&&setTimeout(()=>{%s},%s);%s' % (m.group(1), m.group(2), d, js)
+        return '%s("reloadHomeOnStartup")&&(window.__myvReloaded=1,%s);%s' % (m.group(1), m.group(2), js)
+    return '%s("reloadHomeOnStartup")&&setTimeout(()=>{window.__myvReloaded=1;%s},%s);%s' % (m.group(1), m.group(2), d, js)
 
 
 t = once(r'(\w+)\("reloadHomeOnStartup"\)&&(\(\w+\("launchToOnStartup"\)\?\w+\(JSON\.parse\(\w+\("launchToOnStartup"\)\)\):\w+\(\{signalAction:\{signal:"SOFT_RELOAD_PAGE"\}\}\)\))',
@@ -155,10 +155,10 @@ def _cover_set():
 
 
 # Cortina: tapa el inicio (que llega sin filtrar) hasta que llega el feed ya limpio tras la recarga; maximo 6 s.
-COVER_JS = r"""(function(){try{if(!Ma("reloadHomeOnStartup")||Ma("launchToOnStartup"))return;var d=document.createElement("div");d.id="__myv_cover";d.style.cssText="position:fixed;left:0;top:0;right:0;bottom:0;background:#0f0f0f;z-index:2147483646;display:flex;align-items:center;justify-content:center;color:#777;font:34px sans-serif";COVERSET;(document.body||document.documentElement).appendChild(d);window.__myvCoverOff=function(){var e=document.getElementById("__myv_cover");if(e)e.remove()};setTimeout(function(){if(window.__myvCoverOff)window.__myvCoverOff()},6000)}catch(e){}})();"""
+COVER_JS = r"""(function(){try{if(!Ma("reloadHomeOnStartup")||Ma("launchToOnStartup"))return;var d=document.createElement("div");d.id="__myv_cover";d.style.cssText="position:fixed;left:0;top:0;right:0;bottom:0;background:#0f0f0f;z-index:2147483646;display:flex;align-items:center;justify-content:center;color:#777;font:34px sans-serif";COVERSET;(document.body||document.documentElement).appendChild(d);window.__myvCoverOff=function(){var e=document.getElementById("__myv_cover");if(e)e.remove()};setTimeout(function(){if(window.__myvCoverOff)window.__myvCoverOff()},9000)}catch(e){}})();"""
 t = once(r'(var (\w+)=JSON\.parse;JSON\.parse=function\(\)\{var (\w+)=\2\.apply\(this,arguments\);)',
          lambda m: ADCLEAN.replace("\n", "") + COVER_JS.replace("COVERSET", _cover_set()).replace("BRAND", brand) + m.group(1) + (
-             'try{if(Ma("enableAdBlock"))__mz(%s);var __mf=window.__myvCoverOff;if(__mf&&%s&&%s.contents&&%s.contents.tvBrowseRenderer){window.__myvCoverOff=null;setTimeout(__mf,700)}}catch(_e){}'
+             'try{if(Ma("enableAdBlock"))__mz(%s);var __mf=window.__myvCoverOff;if(__mf&&window.__myvReloaded&&%s&&%s.contents&&%s.contents.tvBrowseRenderer){window.__myvCoverOff=null;setTimeout(__mf,700)}}catch(_e){}'
              % (m.group(3), m.group(3), m.group(3), m.group(3))),
          t, label="limpieza de anuncios")
 # Ma = lector de config: se resuelve por nombre en el codigo minificado
