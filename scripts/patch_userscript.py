@@ -133,6 +133,17 @@ t = once(r'(sectionListRenderer\.contents\.filter\((\w+)=>)!\2\.adSlotRenderer\)
          lambda m: m.group(1) + '!%s.adSlotRenderer&&!Object.keys(%s).some(k=>/^ad[A-Z]|[Mm]asthead/.test(k)))' % (m.group(2), m.group(2)),
          t, label="filtro de anuncios del inicio")
 
+# 2e-bis) Limpieza generica de anuncios en el feed: en cada respuesta JSON se quitan de los arreglos los elementos
+#     que son anuncios (adSlotRenderer, masthead, "Patrocinado"/"Sponsored" en mosaicos). Solo con AdBlock activado.
+ADCLEAN = r"""function __ma(it){var ks=Object.keys(it),i,k,v,k2;for(i=0;i<ks.length;i++){k=ks[i];if(/^ad[A-Z]|[Mm]asthead|promotedSparkles/.test(k))return!0;v=it[k];if(v&&typeof v==="object"&&!Array.isArray(v)){for(k2 in v){if(/^adSlot|^adLayout|^inFeedAd|^tvAdRenderer/.test(k2))return!0}}}
+if(it.tileRenderer||it.lockupViewModel||it.shelfRenderer===void 0&&it.richItemRenderer){try{return/"(Patrocinado|Sponsored|Publicidad|Anuncio)"|adSlotRenderer|inFeedAdLayout|tvAdRenderer/.test(JSON.stringify(it))}catch(e){}}return!1}
+function __mz(o,d){if(!o||typeof o!=="object"||(d=d||0)>14)return;if(Array.isArray(o)){for(var i=o.length-1;i>=0;i--){var it=o[i];if(it&&typeof it==="object"&&!Array.isArray(it)&&__ma(it)){o.splice(i,1)}else __mz(it,d+1)}}else{for(var k in o)__mz(o[k],d+1)}}
+"""
+t = once(r'(var (\w+)=JSON\.parse;JSON\.parse=function\(\)\{var (\w+)=\2\.apply\(this,arguments\);)',
+         lambda m: ADCLEAN.replace("\n", "") + m.group(1) + 'try{if(Ma("enableAdBlock"))__mz(%s)}catch(_e){}' % m.group(3),
+         t, label="limpieza de anuncios")
+# Ma = lector de config: se resuelve por nombre en el codigo minificado
+
 # 2f) Rendimiento: se apagan las funciones mas pesadas (una sola vez; despues se pueden volver a prender en Ajustes).
 #     DeArrow (consulta de red por cada miniatura), previsualizaciones de video, aviso de bienvenida y avisos de SponsorBlock.
 t = once(r'(try\{(\w+)=JSON\.parse\(window\.localStorage\[(\w+)\]\)\}catch\(e\)\{console\.warn\("Config read failed:",e\),\2=(\w+)\})',
