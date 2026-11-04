@@ -103,11 +103,19 @@ if icon_png:
     uri = "data:image/png;base64," + base64.b64encode(raw).decode()
     t = once(r"https://www\.gstatic\.com/ytlr/img/parent_code\.png", uri, t, label="icono de ajustes")
 
-# 2e) Recarga del inicio (SOFT_RELOAD_PAGE): se conserva, pero con 3 s de espera. Ejecutada de inmediato
-#     (como en el original) deja el feed vacio en esta app; esperando a que el inicio cargue, funciona.
-t = once(r'(\w+)\("reloadHomeOnStartup"\)&&(\(\w+\("launchToOnStartup"\)\?\w+\(JSON\.parse\(\w+\("launchToOnStartup"\)\)\):\w+\(\{signalAction:\{signal:"SOFT_RELOAD_PAGE"\}\}\)\))',
-         lambda m: '%s("reloadHomeOnStartup")&&setTimeout(()=>{%s},3e3)' % (m.group(1), m.group(2)),
-         t, label="recarga al iniciar con espera")
+# 2e) Arranque: se quita el SOFT_RELOAD_PAGE que el script hace en cada inicio. Se conserva "launchToOnStartup".
+t = once(r'(\w+)\("reloadHomeOnStartup"\)&&\((\w+)\("launchToOnStartup"\)\?(\w+)\(JSON\.parse\(\2\("launchToOnStartup"\)\)\):\3\(\{signalAction:\{signal:"SOFT_RELOAD_PAGE"\}\}\)\)',
+         lambda m: '%s("reloadHomeOnStartup")&&%s("launchToOnStartup")&&%s(JSON.parse(%s("launchToOnStartup")))' % (m.group(1), m.group(2), m.group(3), m.group(2)),
+         t, label="recarga al iniciar")
+
+# 2f) Rendimiento: se apagan las funciones mas pesadas (una sola vez; despues se pueden volver a prender en Ajustes).
+#     DeArrow (consulta de red por cada miniatura), previsualizaciones de video, aviso de bienvenida y avisos de SponsorBlock.
+t = once(r'(try\{(\w+)=JSON\.parse\(window\.localStorage\[(\w+)\]\)\}catch\(e\)\{console\.warn\("Config read failed:",e\),\2=(\w+)\})',
+         lambda m: m.group(1) + (';try{if(!window.localStorage["myv-perf1"]){var __mP={enableDeArrow:!1,enablePreviews:!1,showWelcomeToast:!1,enableSponsorBlockToasts:!1};'
+                                 'for(var __mK in __mP){%s[__mK]=__mP[__mK]}window.localStorage[%s]=JSON.stringify(%s);window.localStorage["myv-perf1"]="1"}}catch(e){}' % (m.group(2), m.group(3), m.group(2))),
+         t, label="rendimiento")
+for k_ in ("enableDeArrow", "enablePreviews", "showWelcomeToast", "enableSponsorBlockToasts"):
+    t = once(k_ + r":!0,", k_ + ":!1,", t, label="default " + k_)
 
 # 3) Marca visible
 before = len(re.findall("TizenTube", t))
