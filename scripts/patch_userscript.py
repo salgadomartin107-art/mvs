@@ -103,7 +103,11 @@ if icon_png:
     uri = "data:image/png;base64," + base64.b64encode(raw).decode()
     t = once(r"https://www\.gstatic\.com/ytlr/img/parent_code\.png", uri, t, label="icono de ajustes")
 
-# (la recarga del inicio, SOFT_RELOAD_PAGE, se deja como en el original: limpia anuncios del feed)
+# 2e) Recarga del inicio (SOFT_RELOAD_PAGE): se conserva, pero con 3 s de espera. Ejecutada de inmediato
+#     (como en el original) deja el feed vacio en esta app; esperando a que el inicio cargue, funciona.
+t = once(r'(\w+)\("reloadHomeOnStartup"\)&&(\(\w+\("launchToOnStartup"\)\?\w+\(JSON\.parse\(\w+\("launchToOnStartup"\)\)\):\w+\(\{signalAction:\{signal:"SOFT_RELOAD_PAGE"\}\}\)\))',
+         lambda m: '%s("reloadHomeOnStartup")&&setTimeout(()=>{%s},3e3)' % (m.group(1), m.group(2)),
+         t, label="recarga al iniciar con espera")
 
 # 3) Marca visible
 before = len(re.findall("TizenTube", t))
