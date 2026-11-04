@@ -103,10 +103,35 @@ if icon_png:
     uri = "data:image/png;base64," + base64.b64encode(raw).decode()
     t = once(r"https://www\.gstatic\.com/ytlr/img/parent_code\.png", uri, t, label="icono de ajustes")
 
-# 2e) Arranque: se quita el SOFT_RELOAD_PAGE que el script hace en cada inicio. Se conserva "launchToOnStartup".
-t = once(r'(\w+)\("reloadHomeOnStartup"\)&&\((\w+)\("launchToOnStartup"\)\?(\w+)\(JSON\.parse\(\2\("launchToOnStartup"\)\)\):\3\(\{signalAction:\{signal:"SOFT_RELOAD_PAGE"\}\}\)\)',
-         lambda m: '%s("reloadHomeOnStartup")&&%s("launchToOnStartup")&&%s(JSON.parse(%s("launchToOnStartup")))' % (m.group(1), m.group(2), m.group(3), m.group(2)),
-         t, label="recarga al iniciar")
+# 2e) Recarga del inicio (SOFT_RELOAD_PAGE) con 3 s de espera (de inmediato deja el feed vacio) + dialogo de
+#     salida al tocar "Atras" dos veces + filtro ampliado de anuncios del inicio.
+EXIT_JS = r"""
+try{var __bl=0,__bd=null,__bs=0,__bk=[27,4,461,10009];
+function __bc(){if(__bd){__bd.remove();__bd=null}}
+function __bx(){__bc();try{PO({signalAction:{signal:"EXIT_APP"}})}catch(e){}setTimeout(function(){try{window.close()}catch(e){}},900)}
+function __bh(){var b=__bd.querySelectorAll("button");for(var i=0;i<b.length;i++){b[i].style.background=i===__bs?"#e50914":"#333";b[i].style.outline=i===__bs?"3px solid #fff":"none"}}
+function __bo(){__bc();__bs=0;__bd=document.createElement("div");
+__bd.style.cssText="position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,.75);z-index:2147483647;display:flex;align-items:center;justify-content:center;font-family:sans-serif";
+__bd.innerHTML='<div style="background:#1c1c1c;color:#fff;padding:40px 56px;border-radius:16px;text-align:center"><div style="font-size:34px;margin-bottom:28px">¿Cerrar BRAND?</div><button style="font-size:28px;color:#fff;border:0;border-radius:10px;padding:14px 40px;margin:0 12px">Cerrar app</button><button style="font-size:28px;color:#fff;border:0;border-radius:10px;padding:14px 40px;margin:0 12px">Cancelar</button></div>';
+document.body.appendChild(__bd);__bh()}
+document.addEventListener("keydown",function(e){var k=e.keyCode;
+if(__bd){if(k===37||k===39||k===38||k===40){__bs=__bs?0:1;__bh()}else if(k===13||k===32){__bs===0?__bx():__bc()}else if(__bk.indexOf(k)>=0){__bc()}
+e.preventDefault();e.stopImmediatePropagation();return}
+if(__bk.indexOf(k)>=0){var n=Date.now();if(n-__bl<1200){__bl=0;__bo();e.preventDefault();e.stopImmediatePropagation()}else{__bl=n}}},true)}catch(e){}
+"""
+
+
+def _reload(m):
+    po = re.search(r'(\w+)\(\{signalAction:\{signal:"SOFT_RELOAD_PAGE"', m.group(2)).group(1)
+    js = EXIT_JS.replace("PO", po).replace("BRAND", brand).replace("\n", "")
+    return '%s("reloadHomeOnStartup")&&setTimeout(()=>{%s},3e3);%s' % (m.group(1), m.group(2), js)
+
+
+t = once(r'(\w+)\("reloadHomeOnStartup"\)&&(\(\w+\("launchToOnStartup"\)\?\w+\(JSON\.parse\(\w+\("launchToOnStartup"\)\)\):\w+\(\{signalAction:\{signal:"SOFT_RELOAD_PAGE"\}\}\)\))',
+         _reload, t, label="recarga al iniciar con espera")
+t = once(r'(sectionListRenderer\.contents\.filter\((\w+)=>)!\2\.adSlotRenderer\)',
+         lambda m: m.group(1) + '!%s.adSlotRenderer&&!Object.keys(%s).some(k=>/^ad[A-Z]|[Mm]asthead/.test(k)))' % (m.group(2), m.group(2)),
+         t, label="filtro de anuncios del inicio")
 
 # 2f) Rendimiento: se apagan las funciones mas pesadas (una sola vez; despues se pueden volver a prender en Ajustes).
 #     DeArrow (consulta de red por cada miniatura), previsualizaciones de video, aviso de bienvenida y avisos de SponsorBlock.
