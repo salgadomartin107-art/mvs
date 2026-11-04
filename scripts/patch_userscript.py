@@ -124,7 +124,11 @@ if(__bk.indexOf(k)>=0){var n=Date.now();if(n-__bl<1200){__bl=0;__bo();e.preventD
 def _reload(m):
     po = re.search(r'(\w+)\(\{signalAction:\{signal:"SOFT_RELOAD_PAGE"', m.group(2)).group(1)
     js = EXIT_JS.replace("PO", po).replace("BRAND", brand).replace("\n", "")
-    return '%s("reloadHomeOnStartup")&&setTimeout(()=>{%s},15e2);%s' % (m.group(1), m.group(2), js)
+    import os
+    d = os.environ.get("RELOAD_DELAY_MS", "1500")
+    if d == "0":  # igual que el original: recarga inmediata
+        return '%s("reloadHomeOnStartup")&&%s;%s' % (m.group(1), m.group(2), js)
+    return '%s("reloadHomeOnStartup")&&setTimeout(()=>{%s},%s);%s' % (m.group(1), m.group(2), d, js)
 
 
 t = once(r'(\w+)\("reloadHomeOnStartup"\)&&(\(\w+\("launchToOnStartup"\)\?\w+\(JSON\.parse\(\w+\("launchToOnStartup"\)\)\):\w+\(\{signalAction:\{signal:"SOFT_RELOAD_PAGE"\}\}\)\))',
