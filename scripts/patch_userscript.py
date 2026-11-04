@@ -144,21 +144,19 @@ function __ms(it){try{var s=JSON.stringify(it);return s.length<60000&&/"(Patroci
 function __mz(o,d){if(!o||typeof o!=="object"||(d=d||0)>14)return;if(Array.isArray(o)){for(var i=o.length-1;i>=0;i--){var it=o[i];if(it&&typeof it==="object"){if(!Array.isArray(it)&&__mk(it)){o.splice(i,1);continue}__mz(it,d+1);if(!Array.isArray(it)&&__ms(it))o.splice(i,1)}}}else{for(var k in o){if(/[Mm]asthead|^adSlot/.test(k)){delete o[k]}else __mz(o[k],d+1)}}}
 """
 def _cover_set():
-    """Contenido de la cortina: imagen animada (5to argumento, WebP) o, si no hay, el nombre de la marca."""
-    import base64
+    """Contenido de la cortina: imagen animada por URL (5to argumento, https) o, si no hay, el nombre de la marca."""
     img = sys.argv[5] if len(sys.argv) > 5 else None
     if not img:
         return 'd.textContent="%s"' % brand
-    raw = open(img, "rb").read()
-    assert raw[:4] == b"RIFF" and raw[8:12] == b"WEBP", "la imagen de la cortina debe ser WebP"
-    return ('d.style.background="#000";d.innerHTML=\'<img alt="" style="height:72vh" src="data:image/webp;base64,%s">\'' % base64.b64encode(raw).decode())
+    assert img.startswith("https://"), "la imagen de la cortina debe ser una URL https"
+    return 'd.style.background="#000";d.innerHTML=\'<img alt="" style="height:72vh" src="%s">\'' % img
 
 
 # Cortina: tapa el inicio (que llega sin filtrar) hasta que llega el feed ya limpio tras la recarga; maximo 6 s.
-COVER_JS = r"""(function(){try{if(!Ma("reloadHomeOnStartup")||Ma("launchToOnStartup"))return;var d=document.createElement("div");d.id="__myv_cover";d.style.cssText="position:fixed;left:0;top:0;right:0;bottom:0;background:#0f0f0f;z-index:2147483646;display:flex;align-items:center;justify-content:center;color:#777;font:34px sans-serif";COVERSET;(document.body||document.documentElement).appendChild(d);window.__myvCoverOff=function(){var e=document.getElementById("__myv_cover");if(e)e.remove()};setTimeout(function(){if(window.__myvCoverOff)window.__myvCoverOff()},9000)}catch(e){}})();"""
+COVER_JS = r"""(function(){try{if(!Ma("reloadHomeOnStartup")||Ma("launchToOnStartup"))return;var d=document.createElement("div");d.id="__myv_cover";d.style.cssText="position:fixed;left:0;top:0;right:0;bottom:0;background:#0f0f0f;z-index:2147483646;display:flex;align-items:center;justify-content:center;color:#777;font:34px sans-serif";COVERSET;(document.body||document.documentElement).appendChild(d);window.__myvCoverT=Date.now();window.__myvCoverOff=function(){var e=document.getElementById("__myv_cover");if(e)e.remove()};setTimeout(function(){if(window.__myvCoverOff)window.__myvCoverOff()},9000)}catch(e){}})();"""
 t = once(r'(var (\w+)=JSON\.parse;JSON\.parse=function\(\)\{var (\w+)=\2\.apply\(this,arguments\);)',
          lambda m: ADCLEAN.replace("\n", "") + COVER_JS.replace("COVERSET", _cover_set()).replace("BRAND", brand) + m.group(1) + (
-             'try{if(Ma("enableAdBlock"))__mz(%s);var __mf=window.__myvCoverOff;if(__mf&&window.__myvReloaded&&%s&&%s.contents&&%s.contents.tvBrowseRenderer){window.__myvCoverOff=null;setTimeout(__mf,700)}}catch(_e){}'
+             'try{if(Ma("enableAdBlock"))__mz(%s);var __mf=window.__myvCoverOff;if(__mf&&window.__myvReloaded&&%s&&%s.contents&&%s.contents.tvBrowseRenderer){window.__myvCoverOff=null;setTimeout(__mf,Math.max(700,3500-(Date.now()-(window.__myvCoverT||0))))}}catch(_e){}'
              % (m.group(3), m.group(3), m.group(3), m.group(3))),
          t, label="limpieza de anuncios")
 # Ma = lector de config: se resuelve por nombre en el codigo minificado
