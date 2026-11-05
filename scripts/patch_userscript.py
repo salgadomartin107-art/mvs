@@ -49,7 +49,7 @@ t = once(r"https://api\.github\.com/repos/reisxd/TizenTubeCobalt/releases/latest
 #     La atribucion queda en el aviso de licencia (paso 4) y en el README del repositorio.
 n_made = len(re.findall(r'madeByText:"(?:[^"\\]|\\.)*"', t))
 assert n_made >= 30, f"madeByText: se esperaban >=30 traducciones y hay {n_made}"
-t = re.sub(r'madeByText:"(?:[^"\\]|\\.)*"', 'madeByText:""', t)
+t = re.sub(r'madeByText:"(?:[^"\\]|\\.)*"', 'madeByText:"%s"' % __import__("os").environ.get("COVER_LABEL", ""), t)
 
 
 # 2c) Textos huerfanos de la seccion "Apoyar" (ya no se muestran): se eliminan los bloques supportTT:{...}
