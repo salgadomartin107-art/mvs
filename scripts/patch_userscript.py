@@ -115,8 +115,10 @@ function __bx(){__bc();try{PO({signalAction:{signal:"EXIT_APP"}})}catch(e){}setT
 function __bh(){var b=__bd.querySelectorAll("button");for(var i=0;i<b.length;i++){b[i].style.background=i===__bs?"#e50914":"#333";b[i].style.outline=i===__bs?"3px solid #fff":"none"}}
 function __bo(){__bc();__bs=0;__bd=document.createElement("div");
 __bd.style.cssText="position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,.75);z-index:2147483647;display:flex;align-items:center;justify-content:center;font-family:sans-serif";
-__bd.innerHTML='<div style="background:#1c1c1c;color:#fff;padding:40px 56px;border-radius:16px;text-align:center"><div style="font-size:34px;margin-bottom:28px">¿Cerrar BRAND?</div><button style="font-size:28px;color:#fff;border:0;border-radius:10px;padding:14px 40px;margin:0 12px">Cerrar app</button><button style="font-size:28px;color:#fff;border:0;border-radius:10px;padding:14px 40px;margin:0 12px">Cancelar</button></div>';
-document.body.appendChild(__bd);__bh()}
+var bx=document.createElement("div");bx.style.cssText="background:#1c1c1c;color:#fff;padding:40px 56px;border-radius:16px;text-align:center";
+var q=document.createElement("div");q.style.cssText="font-size:34px;margin-bottom:28px";q.textContent="\u00bfCerrar BRAND?";bx.appendChild(q);
+var tt=["Cerrar app","Cancelar"];for(var i=0;i<2;i++){var bt=document.createElement("button");bt.style.cssText="font-size:28px;color:#fff;border:0;border-radius:10px;padding:14px 40px;margin:0 12px";bt.textContent=tt[i];bx.appendChild(bt)}
+__bd.appendChild(bx);document.body.appendChild(__bd);__bh()}
 document.addEventListener("keydown",function(e){var k=e.keyCode;
 if(__bd){if(k===37||k===39||k===38||k===40){__bs=__bs?0:1;__bh()}else if(k===13||k===32){__bs===0?__bx():__bc()}else if(__bk.indexOf(k)>=0){__bc()}
 e.preventDefault();e.stopImmediatePropagation();return}
@@ -151,21 +153,17 @@ function __ms(it){try{var s=JSON.stringify(it);return s.length<60000&&/"(Patroci
 function __mz(o,d){if(!o||typeof o!=="object"||(d=d||0)>14)return;if(Array.isArray(o)){for(var i=o.length-1;i>=0;i--){var it=o[i];if(it&&typeof it==="object"){if(!Array.isArray(it)&&__mk(it)){o.splice(i,1);continue}__mz(it,d+1);if(!Array.isArray(it)&&__ms(it))o.splice(i,1)}}}else{for(var k in o){if(/[Mm]asthead|^adSlot/.test(k)){delete o[k]}else __mz(o[k],d+1)}}}
 """
 def _cover_set():
-    """Cortina: logo estatico (JPEG embebido, 6to argumento) + animacion por URL https encima (5to argumento) + nombre."""
-    import base64
+    """Cortina SIN innerHTML (YouTube exige Trusted Types y lo bloquea): imagen animada por URL https + nombre."""
     img = sys.argv[5] if len(sys.argv) > 5 else None
-    poster = sys.argv[6] if len(sys.argv) > 6 else None
+    label = (brand + " " + __import__("os").environ.get("COVER_LABEL", "")).strip()
     if not img:
-        return 'd.textContent="%s"' % brand
+        return 'd.textContent="%s"' % label
     assert img.startswith("https://"), "la imagen de la cortina debe ser una URL https"
-    layers = ""
-    if poster:
-        raw = open(poster, "rb").read()
-        assert raw[:2] == b"\xff\xd8", "el poster debe ser JPEG"
-        layers += '<img alt="" style="position:absolute;left:0;top:0;height:100%%" src="data:image/jpeg;base64,%s">' % base64.b64encode(raw).decode()
-    layers += '<img alt="" style="position:absolute;left:0;top:0;height:100%%" src="%s">' % img
-    return ('d.style.background="#190000";d.innerHTML=\'<div style="text-align:center"><div style="position:relative;height:64vh;width:61.4vh;margin:0 auto">%s</div>'
-            '<div style="margin-top:2vh;font:4vh sans-serif;color:#aaa">%s</div></div>\'' % (layers, (brand + " " + __import__("os").environ.get("COVER_LABEL", "")).strip()))
+    return ('d.style.background="#000";var w=document.createElement("div");w.style.cssText="text-align:center";'
+            'var bx=document.createElement("div");bx.style.cssText="position:relative;height:64vh;width:61.4vh;margin:0 auto";'
+            'var im=document.createElement("img");im.alt="";im.style.cssText="position:absolute;left:0;top:0;height:100%%";im.src="%s";bx.appendChild(im);'
+            'var tx=document.createElement("div");tx.style.cssText="margin-top:2vh;font:4vh sans-serif;color:#aaa";tx.textContent="%s";'
+            'w.appendChild(bx);w.appendChild(tx);d.appendChild(w)' % (img, label))
 
 
 # Cortina: tapa el inicio (que llega sin filtrar) hasta que llega el feed ya limpio tras la recarga; maximo 6 s.
