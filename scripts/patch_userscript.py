@@ -144,12 +144,21 @@ function __ms(it){try{var s=JSON.stringify(it);return s.length<60000&&/"(Patroci
 function __mz(o,d){if(!o||typeof o!=="object"||(d=d||0)>14)return;if(Array.isArray(o)){for(var i=o.length-1;i>=0;i--){var it=o[i];if(it&&typeof it==="object"){if(!Array.isArray(it)&&__mk(it)){o.splice(i,1);continue}__mz(it,d+1);if(!Array.isArray(it)&&__ms(it))o.splice(i,1)}}}else{for(var k in o){if(/[Mm]asthead|^adSlot/.test(k)){delete o[k]}else __mz(o[k],d+1)}}}
 """
 def _cover_set():
-    """Contenido de la cortina: imagen animada por URL (5to argumento, https) o, si no hay, el nombre de la marca."""
+    """Cortina: logo estatico (JPEG embebido, 6to argumento) + animacion por URL https encima (5to argumento) + nombre."""
+    import base64
     img = sys.argv[5] if len(sys.argv) > 5 else None
+    poster = sys.argv[6] if len(sys.argv) > 6 else None
     if not img:
         return 'd.textContent="%s"' % brand
     assert img.startswith("https://"), "la imagen de la cortina debe ser una URL https"
-    return 'd.style.background="#000";d.innerHTML=\'<img alt="" style="height:72vh" src="%s">\'' % img
+    layers = ""
+    if poster:
+        raw = open(poster, "rb").read()
+        assert raw[:2] == b"\xff\xd8", "el poster debe ser JPEG"
+        layers += '<img alt="" style="position:absolute;left:0;top:0;height:100%%" src="data:image/jpeg;base64,%s">' % base64.b64encode(raw).decode()
+    layers += '<img alt="" style="position:absolute;left:0;top:0;height:100%%" src="%s">' % img
+    return ('d.style.background="#190000";d.innerHTML=\'<div style="text-align:center"><div style="position:relative;height:64vh;width:61.4vh;margin:0 auto">%s</div>'
+            '<div style="margin-top:2vh;font:4vh sans-serif;color:#aaa">%s</div></div>\'' % (layers, brand))
 
 
 # Cortina: tapa el inicio (que llega sin filtrar) hasta que llega el feed ya limpio tras la recarga; maximo 6 s.
