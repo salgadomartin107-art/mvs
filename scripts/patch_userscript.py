@@ -96,7 +96,10 @@ assert n_support >= 30, f"supportTT: se esperaban >=30 bloques y hay {n_support}
 # 2d) Imagen de la entrada de ajustes (opcional, 4to argumento): se embebe como data URI PNG
 #     en lugar del escudo que el original pide a gstatic.com.
 icon_png = sys.argv[4] if len(sys.argv) > 4 else None
-if icon_png:
+if icon_png and icon_png.startswith("https://"):
+    # icono por URL (mantiene el script liviano)
+    t = once(r"https://www\.gstatic\.com/ytlr/img/parent_code\.png", icon_png, t, label="icono de ajustes (URL)")
+elif icon_png:
     import base64
     raw = open(icon_png, "rb").read()
     assert raw[:8] == b"\x89PNG\r\n\x1a\n", "el icono de ajustes debe ser PNG"
