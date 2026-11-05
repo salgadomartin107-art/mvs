@@ -183,10 +183,11 @@ t = once(r'(var (\w+)=JSON\.parse;JSON\.parse=function\(\)\{var (\w+)=\2\.apply\
 # 2f) Rendimiento: se apagan las funciones mas pesadas (una sola vez; despues se pueden volver a prender en Ajustes).
 #     DeArrow (consulta de red por cada miniatura), previsualizaciones de video, aviso de bienvenida y avisos de SponsorBlock.
 t = once(r'(try\{(\w+)=JSON\.parse\(window\.localStorage\[(\w+)\]\)\}catch\(e\)\{console\.warn\("Config read failed:",e\),\2=(\w+)\})',
-         lambda m: m.group(1) + (';try{if(!window.localStorage["myv-perf1"]){var __mP={enableDeArrow:!1,enablePreviews:!1,showWelcomeToast:!1,enableSponsorBlockToasts:!1};'
-                                 'for(var __mK in __mP){%s[__mK]=__mP[__mK]}window.localStorage[%s]=JSON.stringify(%s);window.localStorage["myv-perf1"]="1"}}catch(e){}' % (m.group(2), m.group(3), m.group(2))),
+         lambda m: m.group(1) + (';try{if(!window.localStorage["myv-perf1"]){var __mP={enableDeArrow:!1,showWelcomeToast:!1,enableSponsorBlockToasts:!1};'
+                                 'for(var __mK in __mP){%s[__mK]=__mP[__mK]}window.localStorage[%s]=JSON.stringify(%s);window.localStorage["myv-perf1"]="1"}}catch(e){}'
+                                 'try{if(!window.localStorage["myv-prev1"]){%s.enablePreviews=!0;window.localStorage[%s]=JSON.stringify(%s);window.localStorage["myv-prev1"]="1"}}catch(e){}' % (m.group(2), m.group(3), m.group(2), m.group(2), m.group(3), m.group(2))),
          t, label="rendimiento")
-for k_ in ("enableDeArrow", "enablePreviews", "showWelcomeToast", "enableSponsorBlockToasts"):
+for k_ in ("enableDeArrow", "showWelcomeToast", "enableSponsorBlockToasts"):
     t = once(k_ + r":!0,", k_ + ":!1,", t, label="default " + k_)
 
 # 3) Marca visible
