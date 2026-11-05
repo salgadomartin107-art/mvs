@@ -137,7 +137,7 @@ def _reload(m):
     if d == "0":  # igual que el original: recarga inmediata
         dg = DIAG_JS.replace("PO", po).replace("LABEL", '"%s"' % __import__("os").environ.get("COVER_LABEL", "")).replace("\n", "")
         if __import__("os").environ.get("NO_DIAG") == "1": dg = ""
-    return 'window.__myvReloaded=1;%s;%s%s' % (m.group(2), dg, js)
+    return 'if(!window.__myvEarlyOK){window.__myvReloaded=1;%s}%s%s' % (m.group(2), dg, js)
     return '%s("reloadHomeOnStartup")&&setTimeout(()=>{window.__myvReloaded=1;%s},%s);%s' % (m.group(1), m.group(2), d, js)
 
 
@@ -153,6 +153,8 @@ ADCLEAN = r"""function __mk(it){var ks=Object.keys(it),i,k,v,k2;for(i=0;i<ks.len
 function __ms(it){try{var s=JSON.stringify(it);return s.length<60000&&/"(Patrocinado|Sponsored|Publicidad|Anuncio)"|adSlotRenderer|inFeedAdLayout|tvAdRenderer|[Mm]astheadAd/.test(s)}catch(e){return!1}}
 function __mz(o,d){if(!o||typeof o!=="object"||(d=d||0)>14)return;if(Array.isArray(o)){for(var i=o.length-1;i>=0;i--){var it=o[i];if(it&&typeof it==="object"){if(!Array.isArray(it)&&__mk(it)){o.splice(i,1);continue}__mz(it,d+1);if(!Array.isArray(it)&&__ms(it))o.splice(i,1)}}}else{for(var k in o){if(/[Mm]asthead|^adSlot/.test(k)){delete o[k]}else __mz(o[k],d+1)}}}
 """
+EARLY_JS = r"""try{var __ei=setInterval(function(){try{if(window.__myvReloaded){clearInterval(__ei);return}var __r=0;for(var __k in window._yttv){var __x=window._yttv[__k];if(__x&&__x.instance&&__x.instance.resolveCommand){__r=1;break}}if(__r&&document.body){clearInterval(__ei);window.__myvReloaded=1;window.__myvEarly=1;(Ma("launchToOnStartup")?po(JSON.parse(Ma("launchToOnStartup"))):po({signalAction:{signal:"SOFT_RELOAD_PAGE"}}))}}catch(e){}},50);setTimeout(function(){clearInterval(__ei)},20000)}catch(e){};"""
+
 def _cover_set():
     """Cortina SIN innerHTML (YouTube exige Trusted Types y lo bloquea): imagen animada por URL https + nombre."""
     img = sys.argv[5] if len(sys.argv) > 5 else None
@@ -172,9 +174,9 @@ COVER_JS = r"""(function(){try{function mk(){var d=document.createElement("div")
 window.__myvD={rs:document.readyState,b:document.body?1:0,ap:0,t0:Date.now()};"WEBOFF";window.__myvCoverT=0;window.__myvCoverOff=function(){window.__myvCoverDone=1;var e=document.getElementById("__myv_cover");if(e)e.remove()};
 var iv=setInterval(function(){try{if(window.__myvCoverDone){clearInterval(iv);return}var b=document.body;if(b&&!document.getElementById("__myv_cover")){b.appendChild(mk());window.__myvD.ap++;if(!window.__myvCoverT){window.__myvCoverT=Date.now();setTimeout(function(){window.__myvCoverOff()},9000)}}}catch(e){}},60)}catch(e){}})();"""
 t = once(r'(var (\w+)=JSON\.parse;JSON\.parse=function\(\)\{var (\w+)=\2\.apply\(this,arguments\);)',
-         lambda m: ADCLEAN.replace("\n", "") + COVER_JS.replace("COVERSET", _cover_set()).replace('"WEBOFF";', "window.__myvCoverDone=1;" if __import__("os").environ.get("NO_WEB_COVER")=="1" else "").replace("BRAND", brand) + m.group(1) + (
-             'try{if(Ma("enableAdBlock"))__mz(%s);var __mf=window.__myvCoverOff;if(__mf&&window.__myvReloaded&&%s&&%s.contents&&%s.contents.tvBrowseRenderer){window.__myvCoverOff=null;setTimeout(__mf,Math.max(700,3500-(Date.now()-(window.__myvCoverT||0))))}}catch(_e){}'
-             % (m.group(3), m.group(3), m.group(3), m.group(3))),
+         lambda m: ADCLEAN.replace("\n", "") + EARLY_JS + COVER_JS.replace("COVERSET", _cover_set()).replace('"WEBOFF";', "window.__myvCoverDone=1;" if __import__("os").environ.get("NO_WEB_COVER")=="1" else "").replace("BRAND", brand) + m.group(1) + (
+             'try{if(Ma("enableAdBlock"))__mz(%s);if(window.__myvEarly&&%s&&%s.contents&&%s.contents.tvBrowseRenderer)window.__myvEarlyOK=1;var __mf=window.__myvCoverOff;if(__mf&&window.__myvReloaded&&%s&&%s.contents&&%s.contents.tvBrowseRenderer){window.__myvCoverOff=null;setTimeout(__mf,Math.max(700,3500-(Date.now()-(window.__myvCoverT||0))))}}catch(_e){}'
+             % (m.group(3), m.group(3), m.group(3), m.group(3), m.group(3), m.group(3), m.group(3))),
          t, label="limpieza de anuncios")
 # Ma = lector de config: se resuelve por nombre en el codigo minificado
 
