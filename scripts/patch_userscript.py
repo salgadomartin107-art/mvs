@@ -124,13 +124,17 @@ if(__bk.indexOf(k)>=0){var n=Date.now();if(n-__bl<1200){__bl=0;__bo();e.preventD
 """
 
 
+DIAG_JS = r"""setTimeout(function(){try{var D=window.__myvD||{},c=document.getElementById("__myv_cover"),r=c?c.getBoundingClientRect():null,tp=document.elementFromPoint(640,360),s="rs:"+D.rs+" b0:"+D.b+" ap:"+D.ap+" dt:"+(Date.now()-(D.t0||0))+" el:"+(c?1:0)+(r?" "+Math.round(r.width)+"x"+Math.round(r.height):"")+" top:"+(tp?(tp.id||tp.tagName):"-")+" ch:"+(document.body?document.body.children.length:-1);PO({openPopupAction:{popupType:"TOAST",popup:{overlayToastRenderer:{title:{simpleText:"MyouVTube "+LABEL},subtitle:{simpleText:s}}}}})}catch(e){}},1200);"""
+
+
 def _reload(m):
     po = re.search(r'(\w+)\(\{signalAction:\{signal:"SOFT_RELOAD_PAGE"', m.group(2)).group(1)
     js = EXIT_JS.replace("PO", po).replace("BRAND", brand).replace("\n", "")
     import os
     d = os.environ.get("RELOAD_DELAY_MS", "1500")
     if d == "0":  # igual que el original: recarga inmediata
-        return 'window.__myvReloaded=1;%s;%s' % (m.group(2), js)
+        dg = DIAG_JS.replace("PO", po).replace("LABEL", '"%s"' % __import__("os").environ.get("COVER_LABEL", "")).replace("\n", "")
+    return 'window.__myvReloaded=1;%s;%s%s' % (m.group(2), dg, js)
     return '%s("reloadHomeOnStartup")&&setTimeout(()=>{window.__myvReloaded=1;%s},%s);%s' % (m.group(1), m.group(2), d, js)
 
 
@@ -166,8 +170,8 @@ def _cover_set():
 
 # Cortina: tapa el inicio (que llega sin filtrar) hasta que llega el feed ya limpio tras la recarga; maximo 6 s.
 COVER_JS = r"""(function(){try{function mk(){var d=document.createElement("div");d.id="__myv_cover";d.style.cssText="position:fixed;left:0;top:0;right:0;bottom:0;background:#0f0f0f;z-index:2147483646;display:flex;align-items:center;justify-content:center;color:#777;font:34px sans-serif";COVERSET;return d}
-window.__myvCoverT=0;window.__myvCoverOff=function(){window.__myvCoverDone=1;var e=document.getElementById("__myv_cover");if(e)e.remove()};
-var iv=setInterval(function(){try{if(window.__myvCoverDone){clearInterval(iv);return}var b=document.body;if(b&&!document.getElementById("__myv_cover")){b.appendChild(mk());if(!window.__myvCoverT){window.__myvCoverT=Date.now();setTimeout(function(){window.__myvCoverOff()},9000)}}}catch(e){}},60)}catch(e){}})();"""
+window.__myvD={rs:document.readyState,b:document.body?1:0,ap:0,t0:Date.now()};window.__myvCoverT=0;window.__myvCoverOff=function(){window.__myvCoverDone=1;var e=document.getElementById("__myv_cover");if(e)e.remove()};
+var iv=setInterval(function(){try{if(window.__myvCoverDone){clearInterval(iv);return}var b=document.body;if(b&&!document.getElementById("__myv_cover")){b.appendChild(mk());window.__myvD.ap++;if(!window.__myvCoverT){window.__myvCoverT=Date.now();setTimeout(function(){window.__myvCoverOff()},9000)}}}catch(e){}},60)}catch(e){}})();"""
 t = once(r'(var (\w+)=JSON\.parse;JSON\.parse=function\(\)\{var (\w+)=\2\.apply\(this,arguments\);)',
          lambda m: ADCLEAN.replace("\n", "") + COVER_JS.replace("COVERSET", _cover_set()).replace("BRAND", brand) + m.group(1) + (
              'try{if(Ma("enableAdBlock"))__mz(%s);var __mf=window.__myvCoverOff;if(__mf&&window.__myvReloaded&&%s&&%s.contents&&%s.contents.tvBrowseRenderer){window.__myvCoverOff=null;setTimeout(__mf,Math.max(700,3500-(Date.now()-(window.__myvCoverT||0))))}}catch(_e){}'
