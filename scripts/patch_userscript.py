@@ -165,7 +165,9 @@ def _cover_set():
 
 
 # Cortina: tapa el inicio (que llega sin filtrar) hasta que llega el feed ya limpio tras la recarga; maximo 6 s.
-COVER_JS = r"""(function(){try{var d=document.createElement("div");d.id="__myv_cover";d.style.cssText="position:fixed;left:0;top:0;right:0;bottom:0;background:#0f0f0f;z-index:2147483646;display:flex;align-items:center;justify-content:center;color:#777;font:34px sans-serif";COVERSET;(document.body||document.documentElement).appendChild(d);window.__myvCoverT=Date.now();window.__myvCoverOff=function(){var e=document.getElementById("__myv_cover");if(e)e.remove()};setTimeout(function(){if(window.__myvCoverOff)window.__myvCoverOff()},9000)}catch(e){}})();"""
+COVER_JS = r"""(function(){try{function mk(){var d=document.createElement("div");d.id="__myv_cover";d.style.cssText="position:fixed;left:0;top:0;right:0;bottom:0;background:#0f0f0f;z-index:2147483646;display:flex;align-items:center;justify-content:center;color:#777;font:34px sans-serif";COVERSET;return d}
+window.__myvCoverT=0;window.__myvCoverOff=function(){window.__myvCoverDone=1;var e=document.getElementById("__myv_cover");if(e)e.remove()};
+var iv=setInterval(function(){try{if(window.__myvCoverDone){clearInterval(iv);return}var b=document.body;if(b&&!document.getElementById("__myv_cover")){b.appendChild(mk());if(!window.__myvCoverT){window.__myvCoverT=Date.now();setTimeout(function(){window.__myvCoverOff()},9000)}}}catch(e){}},60)}catch(e){}})();"""
 t = once(r'(var (\w+)=JSON\.parse;JSON\.parse=function\(\)\{var (\w+)=\2\.apply\(this,arguments\);)',
          lambda m: ADCLEAN.replace("\n", "") + COVER_JS.replace("COVERSET", _cover_set()).replace("BRAND", brand) + m.group(1) + (
              'try{if(Ma("enableAdBlock"))__mz(%s);var __mf=window.__myvCoverOff;if(__mf&&window.__myvReloaded&&%s&&%s.contents&&%s.contents.tvBrowseRenderer){window.__myvCoverOff=null;setTimeout(__mf,Math.max(700,3500-(Date.now()-(window.__myvCoverT||0))))}}catch(_e){}'
