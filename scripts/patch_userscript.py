@@ -158,7 +158,7 @@ def _cover_set():
         layers += '<img alt="" style="position:absolute;left:0;top:0;height:100%%" src="data:image/jpeg;base64,%s">' % base64.b64encode(raw).decode()
     layers += '<img alt="" style="position:absolute;left:0;top:0;height:100%%" src="%s">' % img
     return ('d.style.background="#190000";d.innerHTML=\'<div style="text-align:center"><div style="position:relative;height:64vh;width:61.4vh;margin:0 auto">%s</div>'
-            '<div style="margin-top:2vh;font:4vh sans-serif;color:#aaa">%s</div></div>\'' % (layers, brand))
+            '<div style="margin-top:2vh;font:4vh sans-serif;color:#aaa">%s</div></div>\'' % (layers, (brand + " " + __import__("os").environ.get("COVER_LABEL", "")).strip()))
 
 
 # Cortina: tapa el inicio (que llega sin filtrar) hasta que llega el feed ya limpio tras la recarga; maximo 6 s.
