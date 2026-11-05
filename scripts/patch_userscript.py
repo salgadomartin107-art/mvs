@@ -132,6 +132,7 @@ DIAG_JS = r"""setTimeout(function(){try{var D=window.__myvD||{},c=document.getEl
 def _reload(m):
     po = re.search(r'(\w+)\(\{signalAction:\{signal:"SOFT_RELOAD_PAGE"', m.group(2)).group(1)
     js = EXIT_JS.replace("PO", po).replace("BRAND", brand).replace("\n", "")
+    if __import__("os").environ.get("NO_EXIT_JS") == "1": js = ""
     import os
     d = os.environ.get("RELOAD_DELAY_MS", "1500")
     if d == "0":  # igual que el original: recarga inmediata
