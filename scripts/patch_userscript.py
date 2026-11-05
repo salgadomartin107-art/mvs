@@ -127,7 +127,7 @@ def _reload(m):
     import os
     d = os.environ.get("RELOAD_DELAY_MS", "1500")
     if d == "0":  # igual que el original: recarga inmediata
-        return '%s("reloadHomeOnStartup")&&(window.__myvReloaded=1,%s);%s' % (m.group(1), m.group(2), js)
+        return 'window.__myvReloaded=1;%s;%s' % (m.group(2), js)
     return '%s("reloadHomeOnStartup")&&setTimeout(()=>{window.__myvReloaded=1;%s},%s);%s' % (m.group(1), m.group(2), d, js)
 
 
@@ -162,7 +162,7 @@ def _cover_set():
 
 
 # Cortina: tapa el inicio (que llega sin filtrar) hasta que llega el feed ya limpio tras la recarga; maximo 6 s.
-COVER_JS = r"""(function(){try{if(!Ma("reloadHomeOnStartup")||Ma("launchToOnStartup"))return;var d=document.createElement("div");d.id="__myv_cover";d.style.cssText="position:fixed;left:0;top:0;right:0;bottom:0;background:#0f0f0f;z-index:2147483646;display:flex;align-items:center;justify-content:center;color:#777;font:34px sans-serif";COVERSET;(document.body||document.documentElement).appendChild(d);window.__myvCoverT=Date.now();window.__myvCoverOff=function(){var e=document.getElementById("__myv_cover");if(e)e.remove()};setTimeout(function(){if(window.__myvCoverOff)window.__myvCoverOff()},9000)}catch(e){}})();"""
+COVER_JS = r"""(function(){try{var d=document.createElement("div");d.id="__myv_cover";d.style.cssText="position:fixed;left:0;top:0;right:0;bottom:0;background:#0f0f0f;z-index:2147483646;display:flex;align-items:center;justify-content:center;color:#777;font:34px sans-serif";COVERSET;(document.body||document.documentElement).appendChild(d);window.__myvCoverT=Date.now();window.__myvCoverOff=function(){var e=document.getElementById("__myv_cover");if(e)e.remove()};setTimeout(function(){if(window.__myvCoverOff)window.__myvCoverOff()},9000)}catch(e){}})();"""
 t = once(r'(var (\w+)=JSON\.parse;JSON\.parse=function\(\)\{var (\w+)=\2\.apply\(this,arguments\);)',
          lambda m: ADCLEAN.replace("\n", "") + COVER_JS.replace("COVERSET", _cover_set()).replace("BRAND", brand) + m.group(1) + (
              'try{if(Ma("enableAdBlock"))__mz(%s);var __mf=window.__myvCoverOff;if(__mf&&window.__myvReloaded&&%s&&%s.contents&&%s.contents.tvBrowseRenderer){window.__myvCoverOff=null;setTimeout(__mf,Math.max(700,3500-(Date.now()-(window.__myvCoverT||0))))}}catch(_e){}'
